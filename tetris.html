@@ -7,7 +7,6 @@
     <title>テトリス</title>
 </head>
 
-
 <body>
 <canvas id="can"></canvas>
 <script>
@@ -30,7 +29,7 @@ const SCREEN_H = BLOCK_SIZE * FIELD_ROW
 const TETRO_SIZE = 4
 
 const TETRO_COLORS = [
-    "#000",        //0空
+    "#555",        //0空
     "#6CF",        //1水色
     "#F92",        //2オレンジ
     "#66F",        //3青
@@ -115,17 +114,24 @@ let score = 0
 // スピード
 let speed = 0
 
+// let tetro_n = 0
+
 // ゲームフィールドの位置
 const OFFSET_X = 40
 const OFFSET_Y = 20
+
+// キャンバス全体のサイズ
+const CANVAS_W = (BLOCK_SIZE * FIELD_COL + OFFSET_X) * 2
+const CANVAS_H = BLOCK_SIZE * FIELD_ROW + OFFSET_Y * 2
 
 // キャンバスの設定
 let can = document.getElementById("can")
 let con = can.getContext("2d")
 
-can.width = SCREEN_W
-can.height = SCREEN_H
-can.style.border = "4px solid #555"
+can.width = CANVAS_W
+can.height = CANVAS_W
+// can.style.border = "4px solid #555"
+
 
 tetro_t = Math.floor(Math.random()*(TETRO_TYPES.length-1)) + 1
 tetro = TETRO_TYPES[tetro_t]
@@ -146,6 +152,9 @@ function init()
         }
     }
 
+    // 枠の描画
+    drawFlame()
+
     // 最初のテトロのためのネクストを入れる
     tetro_n = Math.floor(Math.random()*(TETRO_TYPES.length-1)) + 1
     setTetro()
@@ -159,12 +168,15 @@ function setTetro()
     // ネクストを現在のテトロにする
     tetro_t = tetro_n
     tetro = TETRO_TYPES[tetro_t]
-    totro_n = Math.floor(Math.random()*(TETRO_TYPES.length-1)) + 1
+    tetro_n = Math.floor(Math.random()*(TETRO_TYPES.length-1)) + 1
+
+    console.log(tetro_n)
 
     // 位置を初期値にする
     tetro_x = START_X
     tetro_y = START_Y
 }
+
 
 // ブロック一つを描画する
 function drawBlock(x, y, c)
@@ -172,15 +184,33 @@ function drawBlock(x, y, c)
     let px = x * BLOCK_SIZE
     let py = y * BLOCK_SIZE
     con.fillStyle=TETRO_COLORS[c]
-    con.fillRect(px, py, BLOCK_SIZE, BLOCK_SIZE)
+    con.fillRect(px + OFFSET_X, py + OFFSET_Y, BLOCK_SIZE, BLOCK_SIZE)
     con.strokeStyle="black"
-    con.strokeRect(px, py, BLOCK_SIZE, BLOCK_SIZE)
+    con.strokeRect(px + OFFSET_X, py + OFFSET_Y, BLOCK_SIZE, BLOCK_SIZE)
+}
+
+// 枠の描画
+function drawFlame()
+{
+    con.strokeStyle="gray"
+    con.lineWidth=2
+    con.strokeRect(OFFSET_X, OFFSET_Y, SCREEN_W, SCREEN_H)
+    con.strokeStyle="red"
+    con.beginPath();
+    con.moveTo(OFFSET_X, OFFSET_Y + BLOCK_SIZE * 2);
+    con.lineTo(OFFSET_X + SCREEN_W, OFFSET_Y + BLOCK_SIZE * 2);
+    con.closePath();
+    con.stroke();
+    con.lineWidth=1
 }
 
 // 全部描画する
 function drawALL()
 {
-    con.clearRect(0, 0, SCREEN_W, SCREEN_H)
+    con.clearRect(OFFSET_X, OFFSET_Y, SCREEN_W + OFFSET_X, SCREEN_H + OFFSET_Y)
+    con.clearRect(0, 0, CANVAS_W, CANVAS_H)
+
+    drawFlame()
 
     // フィールドの描画
     for(let y=0; y<FIELD_ROW; y++)
@@ -207,7 +237,7 @@ function drawALL()
             if(tetro[y][x])
             {
                 // 着地点
-                drawBlock(tetro_x+x, tetro_y+y+plus, 0)
+                drawBlock(tetro_x+x, tetro_y + y + plus, 0)
                 // 本体
                 drawBlock(tetro_x + x, tetro_y + y, tetro_t)
             }
@@ -251,25 +281,26 @@ function drawInfo()
     con.fillText(s, 410, 300)
     s=""+score
     w = con.measureText(s).whidth
-    con.fillText(s, 560-w, 340)
+    con.fillText(s, 480, 340)
 
     s="LINES"
     w = con.measureText(s).width
     con.fillText(s, 410, 400)
     s=""+lines
     w = con.measureText(s).width
-    con.fillText(s, 560-w, 440)
+    con.fillText(s, 480, 440)
 
     if(over)
     {
-        s="GAME OVERaaa"
+        s="GAME OVER"
         w = con.measureText(s).width
         let x = SCREEN_W/2 - w/2
         let y = SCREEN_H/2 - 20
-        con.lineWidth = 4
-        con.strokeText(s, OFFSET_X+x, y)
+        con.lineWidth = 15
+        con.font = "50px 'ＭＳ ゴシック'";
+        con.strokeText(s, OFFSET_X + x - 90, y)
         con.fillStyle="white"
-        con.fillText(s, OFFSET_X+x, y)
+        con.fillText(s, OFFSET_X + x - 90, y)
     }
 
 }
@@ -362,8 +393,8 @@ function chekLine()
         // se3.pause()
         // se3.play()
         lines += linec
-        score+=100*(2**(linec-1))
-        if(speed<GAME_SPEED-10) speed += 10
+        score += 100 * (2**(linec - 1))
+        if(speed < GAME_SPEED - 10) speed += 10
     }
 }
 
@@ -377,18 +408,29 @@ function dropTetro()
     {
         fixTetro()
         chekLine()
-        tetro_t = Math.floor(Math.random()*(TETRO_TYPES.length-1)) + 1
-        tetro = TETRO_TYPES[tetro_t]
-        tetro_x = START_X
-        tetro_y = START_Y
+        // tetro_t = Math.floor(Math.random()*(TETRO_TYPES.length-1)) + 1
+        // tetro = TETRO_TYPES[tetro_t]
+        // tetro_x = START_X
+        // tetro_y = START_Y
+        setTetro()
+        console.log(field[0].length)
 
-        if(!checkMove(0, 0))
+        // if(!checkMove(0, 0))
+        // {
+        //     over = true
+        // }
+        for(let i = 0; i<field[0].length; i++)
         {
-            over = true
+            if(field[2][i])
+            {
+                over = true
+                drawInfo()
+                break
+            }
         }
     }
 
-    drawALL()
+    if(!over) drawALL()
 }
 
 // キーボードが押されたときの処理
@@ -417,15 +459,6 @@ document.onkeydown = function(e)
     drawALL()
 }
 
-
-
-
-
-
 </script>
-    
-
-
-
 </body>
 </html>
