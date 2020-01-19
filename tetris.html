@@ -12,7 +12,7 @@
 <script>
 
 // 落ちるスピード
-const GAME_SPEED = 300
+const GAME_SPEED = 500
 
 // フィールドサイズ
 const FIELD_COL = 10
@@ -113,6 +113,11 @@ let score = 0
 
 // スピード
 let speed = 0
+let speed_level = 1
+
+// 地面についてから動かせるようにするためのフラグ
+let drop_flag = false
+let start_frag = false
 
 // let tetro_n = 0
 
@@ -130,14 +135,16 @@ let con = can.getContext("2d")
 
 can.width = CANVAS_W
 can.height = CANVAS_W
-// can.style.border = "4px solid #555"
 
+drawFlame()
+drawInfo()
 
-tetro_t = Math.floor(Math.random()*(TETRO_TYPES.length-1)) + 1
-tetro = TETRO_TYPES[tetro_t]
-
-
-setInterval(dropTetro, GAME_SPEED)
+function game_start()
+{
+    init()
+    drawALL()
+    start_frag = true
+}
 
 // 初期化
 function init()
@@ -154,12 +161,17 @@ function init()
 
     // 枠の描画
     drawFlame()
+    drawInfo()
 
     // 最初のテトロのためのネクストを入れる
     tetro_n = Math.floor(Math.random()*(TETRO_TYPES.length-1)) + 1
     setTetro()
     drawALL()
-    setInterval(dropTetro, GAME_SPEED-speed)
+    init_interval = setInterval(dropTetro, GAME_SPEED-speed)
+    over = false
+    speed_level = 1
+    speed = 0
+    score = 0
 }
 
 // テトロをネクストで初期化
@@ -170,13 +182,10 @@ function setTetro()
     tetro = TETRO_TYPES[tetro_t]
     tetro_n = Math.floor(Math.random()*(TETRO_TYPES.length-1)) + 1
 
-    console.log(tetro_n)
-
     // 位置を初期値にする
     tetro_x = START_X
     tetro_y = START_Y
 }
-
 
 // ブロック一つを描画する
 function drawBlock(x, y, c)
@@ -240,6 +249,7 @@ function drawALL()
                 drawBlock(tetro_x+x, tetro_y + y + plus, 0)
                 // 本体
                 drawBlock(tetro_x + x, tetro_y + y, tetro_t)
+                
             }
             // ネクストテトロ
             if(TETRO_TYPES[tetro_n][y][x])
@@ -248,31 +258,16 @@ function drawALL()
             }
         }
     }
-
     drawInfo()
-
-    // if(over)
-    // {
-    //     let s = "GAME OVER"
-    //     con.font = "40px 'MS ゴシック'"
-    //     let w = con.measureText(s).width
-    //     let x = SCREEN_W/2 - w/2
-    //     let y = SCREEN_H/2 - 20
-    //     con.lineWidth = 4
-    //     con.strokeText(s, x, y)
-    //     con.fillStyle = "white"
-    //     con.fillText(s, x, y)
-    // }
 }
-
-init()
-drawALL()
 
 // インフォメーション表示
 function drawInfo()
 {
     let w
     con.fillStyle="black"
+    con.strokeStyle="black"
+    con.font = "10px 'ＭＳ ゴシック'";
 
     let s="NEXT"
     con.fillText(s, 410, 120)
@@ -281,18 +276,36 @@ function drawInfo()
     con.fillText(s, 410, 300)
     s=""+score
     w = con.measureText(s).whidth
+    con.font = "50px 'ＭＳ ゴシック'";
     con.fillText(s, 480, 340)
+    con.font = "10px 'ＭＳ ゴシック'";
 
-    s="LINES"
+    s="SPEED LEVEL"
     w = con.measureText(s).width
     con.fillText(s, 410, 400)
-    s=""+lines
+    s=""+speed_level
     w = con.measureText(s).width
+    con.font = "50px 'ＭＳ ゴシック'";
     con.fillText(s, 480, 440)
+    con.font = "10px 'ＭＳ ゴシック'";
+
+    if(!start_frag)
+    {
+        s="PRESS THE ENTER KEY"
+        w = con.measureText(s).width
+        let x = SCREEN_W/2 - w/2
+        let y = SCREEN_H/2 - 20
+        con.lineWidth = 10
+        con.font = "28px 'ＭＳ ゴシック'";
+        con.strokeText(s, OFFSET_X + x - 90, y)
+        con.fillStyle="white"
+        con.fillText(s, OFFSET_X + x - 90, y)
+    }
 
     if(over)
     {
         s="GAME OVER"
+        t="Press the enter key to restart"
         w = con.measureText(s).width
         let x = SCREEN_W/2 - w/2
         let y = SCREEN_H/2 - 20
@@ -301,6 +314,9 @@ function drawInfo()
         con.strokeText(s, OFFSET_X + x - 90, y)
         con.fillStyle="white"
         con.fillText(s, OFFSET_X + x - 90, y)
+        con.lineWidth = 1
+        con.font = "15px 'ＭＳ ゴシック'";
+        con.strokeText(t, OFFSET_X + x - 90, y + 30)
     }
 
 }
@@ -380,21 +396,28 @@ function chekLine()
         if(flag)
         {
             linec ++
-            for(let ny=y; ny>0; ny--)
+            for(let ny = y; ny > 0; ny--)
             {
-                for(let nx=0;nx<FIELD_COL; nx++)
+                for(let nx = 0; nx < FIELD_COL; nx++)
                 {
                     field[ny][nx] = field[ny-1][nx]
                 }
             }
         }
     }
-    if(linec){
-        // se3.pause()
-        // se3.play()
+    if(linec)
+    {
         lines += linec
-        score += 100 * (2**(linec - 1))
-        if(speed < GAME_SPEED - 10) speed += 10
+        if(linec == 1) score += 40
+        if(linec == 2) score += 100
+        if(linec == 3) score += 300
+        if(linec == 4) score += 1200
+
+        if(speed < GAME_SPEED - 10){
+            speed += 40
+            speed_level += 1
+        } 
+        
     }
 }
 
@@ -406,28 +429,30 @@ function dropTetro()
     if (checkMove(0, 1)) tetro_y ++
     else
     {
-        fixTetro()
-        chekLine()
-        // tetro_t = Math.floor(Math.random()*(TETRO_TYPES.length-1)) + 1
-        // tetro = TETRO_TYPES[tetro_t]
-        // tetro_x = START_X
-        // tetro_y = START_Y
-        setTetro()
-        console.log(field[0].length)
-
-        // if(!checkMove(0, 0))
-        // {
-        //     over = true
-        // }
-        for(let i = 0; i<field[0].length; i++)
+        if(! drop_flag)
         {
-            if(field[2][i])
-            {
-                over = true
-                drawInfo()
-                break
-            }
+            drop_flag = true
+            // return
         }
+        else
+        {
+            fixTetro()
+            chekLine()
+            setTetro()
+
+            for(let i = 0; i<field[0].length; i++)
+            {
+                if(field[2][i])
+                {
+                    over = true
+                    clearInterval(init_interval)
+                    drawInfo()
+                    break
+                }
+            }
+            drop_flag = false
+        }
+        
     }
 
     if(!over) drawALL()
@@ -436,7 +461,19 @@ function dropTetro()
 // キーボードが押されたときの処理
 document.onkeydown = function(e)
 {
-    if(over) return
+    if(over) {
+        if(e.keyCode == 13){
+            init()
+            over = false
+        }
+        return
+    }
+
+    if(!start_frag){
+        if(e.keyCode ==13){
+            game_start()
+        }
+    }    
     switch(e.keyCode)
     {
         case 37:
@@ -458,6 +495,16 @@ document.onkeydown = function(e)
     }
     drawALL()
 }
+
+
+// can.addEventListener('click', function(e){
+//     var rect = e.target.getBoundingClientRect()
+//     x = e.clientX - rect.left
+//     y = e.clientY - rect.top
+
+//     con.fillRect(x, y, 10, 10)
+
+// })
 
 </script>
 </body>
