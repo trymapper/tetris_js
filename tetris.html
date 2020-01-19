@@ -414,8 +414,11 @@ function chekLine()
         if(linec == 4) score += 1200
 
         if(speed < GAME_SPEED - 10){
-            speed += 40
+            speed += 50
             speed_level += 1
+            clearInterval(init_interval)
+            init_interval = setInterval(dropTetro, GAME_SPEED - speed)
+            console.log(speed)
         } 
         
     }
