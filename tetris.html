@@ -167,11 +167,11 @@ function init()
     tetro_n = Math.floor(Math.random()*(TETRO_TYPES.length-1)) + 1
     setTetro()
     drawALL()
-    init_interval = setInterval(dropTetro, GAME_SPEED-speed)
     over = false
     speed_level = 1
     speed = 0
     score = 0
+    init_interval = setInterval(dropTetro, GAME_SPEED-speed)
 }
 
 // テトロをネクストで初期化
@@ -482,7 +482,7 @@ document.onkeydown = function(e)
         case 37:
             if(checkMove(-1, 0)) tetro_x --
             break
-        case 38:
+        case 85:
             if(checkMove(0, -1)) tetro_y --
             break
         case 39:
