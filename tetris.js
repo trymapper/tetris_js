@@ -407,8 +407,17 @@ function chekLine()
             init_interval = setInterval(dropTetro, GAME_SPEED - speed)
             console.log(speed)
         } 
+
+        playSound()
         
     }
+}
+
+function playSound()
+{
+    adioElem = new Audio()
+    adioElem.src = "hello.wav"
+    adioElem.play()
 }
 
 
